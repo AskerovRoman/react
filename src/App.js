@@ -1,65 +1,75 @@
 import { useState } from 'react';
 import styles from './App.module.css';
+import data from './data.json';
 
 export const App = () => {
-	const [value, setValue] = useState('');
-	const [list, setList] = useState([]);
-	const [error, setError] = useState('');
+	// Можно задать 2 состояния — steps и activeIndex
+	const [steps] = useState(data);
+	const [activeIndex, setActiveIndex] = useState(0);
 
-	const validate = (val) => val.length >= 3;
+	// И определить 3 обработчика: Клик назад, Клик вперед, Начать сначала
+	const handleNext = () => {
+		setActiveIndex((prev) => prev + 1);
+	};
 
-	const onInputButtonClick = () => {
-		const promptValue = prompt('Введите значение');
-		if (validate(promptValue)) {
-			setValue(promptValue);
-			setError('');
-		} else {
-			setError('Введенное значение должно содержать минимум 3 символа');
+	const handleBack = () => {
+		if (activeIndex > 0) {
+			setActiveIndex((prev) => prev - 1);
 		}
 	};
 
-	const isValueValid = validate(value);
-
-	const onAddButtonClick = () => {
-		if (!isValueValid) return;
-		setList((prev) => [...prev, { id: Date.now(), value }]);
-		setValue('');
-		setError('');
+	const handleReset = () => {
+		setActiveIndex(0);
 	};
 
+	// И 2 переменных-флага — находимся ли мы на первом шаге, и находимся ли на последнем
+	const isLastStep = activeIndex === steps.length - 1;
+	const isFirstStep = activeIndex === 0;
+
 	return (
-		<div className={styles.app}>
-			<h1 className={styles['page-heading']}>Ввод значения</h1>
-			<p className={styles['no-margin-text']}>
-				Текущее значение <code>value</code>: "
-				<output className={styles['current-value']}>{value}</output>"
-			</p>
-			{error !== '' && <div className={styles.error}>{error}</div>}
-			<div className={styles['buttons-container']}>
-				<button className={styles.button} onClick={onInputButtonClick}>
-					Ввести новое
-				</button>
-				<button
-					className={styles.button}
-					onClick={onAddButtonClick}
-					disabled={!isValueValid}
-				>
-					Добавить в список
-				</button>
-			</div>
-			<div className={styles['list-container']}>
-				<h2 className={styles['list-heading']}>Список:</h2>
-				{list.length > 0 ? (
-					<ul className={styles.list}>
-						{list.map((item) => (
-							<li className={styles['list-item']} key={item.id}>
-								{item.value}
+		<div className={styles.container}>
+			<div className={styles.card}>
+				<h1>Инструкция по готовке пельменей</h1>
+				<div className={styles.steps}>
+					<div className={styles['steps-content']}>
+						{steps[activeIndex].content}
+					</div>
+					<ul className={styles['steps-list']}>
+						{steps.map(({ title, id }, index) => (
+							<li
+								key={id}
+								className={
+									styles['steps-item'] +
+									(index === activeIndex ? ` ${styles.active}` : '') +
+									(index < activeIndex ? ` ${styles.done}` : '')
+								}
+							>
+								<button
+									className={styles['steps-item-button']}
+									onClick={() => setActiveIndex(index)}
+								>
+									{index + 1}
+								</button>{' '}
+								{title}
 							</li>
 						))}
 					</ul>
-				) : (
-					<p className={styles['no-margin-text']}>Нет добавленных элементов</p>
-				)}
+					<div className={styles['buttons-container']}>
+						<button
+							className={styles.button}
+							onClick={handleBack}
+							disabled={isFirstStep}
+						>
+							Назад
+						</button>
+						<button
+							className={styles.button}
+							onClick={() => (isLastStep ? handleReset() : handleNext())}
+						>
+							{isLastStep ? 'Начать сначала' : 'Далее'}
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 	);
